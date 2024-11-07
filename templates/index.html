@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=0.80, user-scalable=no">
+    <title>Vitamin B12 Chatbot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #6d28d9;
+            --secondary-color: #db2777;
+            --accent-color: #4f46e5;
+            --bg-color: #0f172a;
+            --text-color: #e2e8f0;
+            --chat-bg: rgba(30, 41, 59, 0.8);
+            --user-msg-bg: rgba(109, 40, 217, 0.2);
+            --bot-msg-bg: rgba(219, 39, 119, 0.1);
+            --gradient-start: rgba(109, 40, 217, 0.1);
+            --gradient-end: rgba(219, 39, 119, 0.1);
+        }
+
+        body, html {
+            font-family: 'Space Grotesk', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, var(--gradient-start) 0%, transparent 50%),
+                radial-gradient(circle at 90% 80%, var(--gradient-end) 0%, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1400px;
+            height: 95vh;
+            background: var(--chat-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent
+            );
+        }
+
+        .header {
+            padding: 24px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .title {
+            font-size: 32px;
+            font-weight: 600;
+            margin: 0;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .theme-toggle {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--text-color);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        #chat {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 16px 24px;
+            border-radius: 20px;
+            line-height: 1.6;
+            font-size: 16px;
+            word-wrap: break-word;
+            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes fadeIn {
+            from { 
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: var(--user-msg-bg);
+            border-bottom-right-radius: 4px;
+            background-image: linear-gradient(
+                135deg,
+                rgba(109, 40, 217, 0.2),
+                rgba(79, 70, 229, 0.2)
+            );
+        }
+
+        .message.bot {
+            align-self: flex-start;
+            background: var(--bot-msg-bg);
+            border-bottom-left-radius: 4px;
+            background-image: linear-gradient(
+                135deg,
+                rgba(219, 39, 119, 0.1),
+                rgba(236, 72, 153, 0.1)
+            );
+        }
+
+        .input-area {
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.03);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #user-input-container {
+            display: flex;
+            gap: 12px;
+        }
+
+        #user-input {
+            flex: 1;
+            padding: 16px 24px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            outline: none;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-color);
+            font-family: 'Space Grotesk', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        #user-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(109, 40, 217, 0.2);
+        }
+
+        #user-input::placeholder {
+            color: rgba(226, 232, 240, 0.5);
+        }
+
+        #send-button {
+            padding: 16px 32px;
+            border: none;
+            border-radius: 16px;
+            background: var(--primary-color);
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-family: 'Space Grotesk', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #send-button:hover {
+            background: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        #send-button:disabled {
+            background-color: rgba(109, 40, 217, 0.3);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .typing-indicator {
+            align-self: flex-start;
+            background: var(--bot-msg-bg);
+            border-radius: 16px;
+            padding: 16px 24px;
+            font-size: 16px;
+            animation: pulse 1.5s infinite;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; transform: scale(0.98); }
+            50% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0.5; transform: scale(0.98); }
+        }
+
+        .loading-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .loading-dots span {
+            width: 6px;
+            height: 6px;
+            background: var(--text-color);
+            border-radius: 50%;
+            animation: dotPulse 1.5s infinite;
+        }
+
+        .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes dotPulse {
+            0%, 100% { transform: scale(0.8); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+
+        #chat::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #chat::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        #chat::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        #chat::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .light-theme {
+            --bg-color: #f8fafc;
+            --text-color: #1e293b;
+            --chat-bg: rgba(255, 255, 255, 0.8);
+            --user-msg-bg: rgba(109, 40, 217, 0.1);
+            --bot-msg-bg: rgba(219, 39, 119, 0.05);
+            --gradient-start: rgba(109, 40, 217, 0.05);
+            --gradient-end: rgba(219, 39, 119, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Vitamin B12 Chatbot</h1>
+            <button class="theme-toggle" aria-label="Toggle theme">🌓</button>
+        </div>
+        <div id="chat"></div>
+        <div class="input-area">
+            <div id="user-input-container">
+                <input type="text" id="user-input" placeholder="Ask about vitamin B12..." aria-label="Enter your message" />
+                <button id="send-button" aria-label="Send message">
+                    Send
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Previous JavaScript code remains the same
+        const chat = document.getElementById('chat');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const themeToggle = document.querySelector('.theme-toggle');
+
+        let isLightTheme = false;
+
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light-theme');
+            isLightTheme = !isLightTheme;
+            themeToggle.textContent = isLightTheme ? '🌙' : '🌓';
+        });
+
+        sendButton.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        function addMessage(role, content) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', role);
+            chat.appendChild(messageElement);
+            chat.scrollTop = chat.scrollHeight;
+
+            if (role === 'bot') {
+                typeMessage(messageElement, content);
+            } else {
+                messageElement.textContent = content;
+            }
+        }
+
+        function typeMessage(element, message) {
+            let i = 0;
+            const interval = setInterval(() => {
+                if (i < message.length) {
+                    element.textContent += message.charAt(i);
+                    i++;
+                    chat.scrollTop = chat.scrollHeight;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 20);
+        }
+
+        function addTypingIndicator() {
+            const indicator = document.createElement('div');
+            indicator.classList.add('typing-indicator');
+            indicator.innerHTML = 'Vitamin B12 Bot is thinking <div class="loading-dots"><span></span><span></span><span></span></div>';
+            chat.appendChild(indicator);
+            chat.scrollTop = chat.scrollHeight;
+            return indicator;
+        }
+
+        function removeTypingIndicator(indicator) {
+            chat.removeChild(indicator);
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (message === '') return;
+
+            addMessage('user', message);
+            userInput.value = '';
+            sendButton.disabled = true;
+
+            const typingIndicator = addTypingIndicator();
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message }),
+                });
+
+                const data = await response.json();
+
+                removeTypingIndicator(typingIndicator);
+
+                if (response.ok) {
+                    addMessage('bot', data.reply);
+                } else {
+                    addMessage('bot', 'Sorry, I encountered an error. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                removeTypingIndicator(typingIndicator);
+                addMessage('bot', 'Sorry, I encountered an error. Please try again.');
+            } finally {
+                sendButton.disabled = false;
+            }
+        }
+
+        // Initial greeting
+        setTimeout(() => {
+            addMessage('bot', "Hello! I'm your Vitamin B12 assistant. I can help you learn about B12 sources, benefits, and recommended intake. How can I assist you today?");
+        }, 500);
+    </script>
+</body>
+</html>
